@@ -1,0 +1,71 @@
+@using X.PagedList.Mvc.Core;
+@using X.PagedList;
+@model IPagedList<Transaction>
+
+
+@{
+    ViewData["Title"] = "Transactions";
+    Layout = "~/Views/Shared/_MyLayout.cshtml";
+    int pageID = 0;
+
+    foreach(var product in Model)
+    {
+        pageID = product.AccountId;
+
+
+    }
+
+}
+
+<div>
+    <partial name="~/Views/Shared/_GeneralStylePartial.cshtml" />
+
+
+
+        <h4>Transactions for Account: @ViewBag.AccountNumber   Account Balance:$ @ViewBag.balance</h4>
+
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">TransactionType</th>
+                    <th scope="col">Transaction Detail</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                 @foreach (var product in Model)
+    {
+                <tr>
+
+                    <td>@product.TransactionType</td>
+                    <td>@product.TransactionDetail</td>
+                    @if (product.TransactionType == nameof(BankApp.EnumEntities.TransactionType.Debit))
+                    {
+                        <td>-@product.TransactionAmount</td>
+                    }
+                    else
+                    {
+                        <td>@product.TransactionAmount</td>
+                    }
+                    <td>@product.CreatedDate</td>
+
+
+
+                </tr>
+            }
+            </tbody>
+        </table>
+
+@Html.PagedListPager((IPagedList)Model, page => Url.Action("Account","bank", new {Id = pageID, page = page }),
+    new X.PagedList.Web.Common.PagedListRenderOptions
+    {
+        @* DisplayItemSliceAndTotal = true, *@
+        ContainerDivClasses = new[] { "navigation" },
+        LiElementClasses = new[] { "page-item" },
+        PageClasses = new[] { "page-link" },
+    })
+
+
+</div>

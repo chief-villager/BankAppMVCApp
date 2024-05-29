@@ -1,0 +1,90 @@
+@model Customer
+@{
+    ViewData["Title"] = "Transfer";
+    Layout = "~/Views/Shared/_MyLayout.cshtml";
+
+}
+<style>
+    body {
+        background-image: url("/images/shsu.webp");
+    }
+</style>
+<script>
+    function Failtransaction(e) {
+        e.preventDefault();
+        var ele = document.getElementById("st");
+        ele.innerHTML = "Account Restricted. Visit your branch"
+        var pp = document.getElementsByClassName("alert");
+        for (var i = 0; i < pp.length; i++) {
+            pp[i].style.display = "block";
+        }
+        document.getElementsByClassName("soft").disabled = true;
+
+
+
+    }
+
+
+</script>
+<partial name="~/Views/Shared/_GeneralStylePartial.cshtml" />
+<h1>@ViewData["Title"]</h1>
+<div style="display: none;" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <strong id="st"></strong>
+    <button onclick="Failtransaction(event)" type="button" class="soft btn-close" data-bs-dismiss="alert"
+        aria-label="Close"></button>
+</div>
+
+
+
+<button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight"
+    aria-controls="offcanvasRight">Wire and Domestic Transfer</button>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
+    <div class="offcanvas-header">
+        <h5 id="offcanvasRightLabel">Transfer</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form action="">
+            <div class="mb-3">
+                <label for="transferType" class="form-label">Transfer Type</label>
+                <select id="transferType" name="transferType" required class="form-select"
+                    aria-labelledby="transferTypeLabel">
+                    <option selected disabled>Choose Transfer Type</option>
+                    <option value="1">International Wire</option>
+                    <option value="2">Domestic Transfer</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="fromAccount" class="form-label">From</label>
+                <select id="fromAccount" name="fromAccount" required class="form-select"
+                    aria-labelledby="fromAccountLabel">
+                    <option selected disabled>Choose Account</option>
+                    @foreach (var item in Model.Account)
+                    {
+                        <option value="@item.AccountNumber">@item.AccountType - @item.AccountNumber</option>
+                    }
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="accountNumber" class="form-label">Account Number</label>
+                <input type="text" id="accountNumber" name="accountNumber" class="form-control"
+                    placeholder="Account Number" required>
+            </div>
+            <div class="mb-3">
+                <label for="routingNumber" class="form-label">Routing Number</label>
+                <input type="text" id="routingNumber" name="routingNumber" class="form-control"
+                    placeholder="Routing Number" required>
+            </div>
+            <button onclick="Failtransaction(event)" type="submit" class="btn btn-primary">Transfer</button>
+        </form>
+
+    </div>
+
+    @section Scripts {
+        @{
+            <partial name="_ValidationScriptsPartial.cshtml" />
+
+
+        }
+    }

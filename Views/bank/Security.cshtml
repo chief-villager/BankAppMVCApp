@@ -1,0 +1,44 @@
+@model Customer
+@{
+    <partial name="~/Views/Shared/_GeneralStylePartial.cshtml" />
+
+}
+<style>
+    body {
+        background-image: url("/images/login.jpeg");
+    }
+</style>
+
+
+<div>
+
+
+    <form method="post">
+        <div class="form-group">
+            <div asp-validation-summary="All">
+                <div class="form-group">
+                    <div class="col-6">
+                        <label asp-for="Question">Question</label>
+                        <input asp-for="Question" class="form-control" id="exampleInputEmail1"
+                            aria-describedby="emailHelp" placeholder="Enter email">
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-6">
+                        <label for="Answer">Answer</label>
+                        <input input="text" name="Answer" class="form-control" id="exampleInputEmail1"
+                            aria-describedby="emailHelp" placeholder="">
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p></p>
+        <div class="d-grid gap-2 col-6">
+            <button type="submit" class="btn btn-primary">Enter</button>
+
+        </div>
+
+    </form>
+</div>

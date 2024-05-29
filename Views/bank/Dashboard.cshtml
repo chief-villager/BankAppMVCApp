@@ -1,0 +1,57 @@
+@model List<Account>
+@{
+    ViewBag.Title = "Dashboard Page";
+    Layout = "~/Views/Shared/_MyLayout.cshtml";
+    int accountid = 0;
+    Account myAccount = new Account();
+    foreach (var account in Model)
+    {
+        if (account != null)
+        {
+            accountid = account.Id;
+            myAccount.Id = account.Id;
+            myAccount.AccountNumber = account.AccountNumber;
+            myAccount.AccountType = account.AccountType;
+            myAccount.CustomerId = account.CustomerId;
+            myAccount.Customer = account.Customer;
+            myAccount.Amount = account.Amount;
+        }
+    }
+
+
+
+}
+<style>
+    body {
+        background-image: url("/images/login.jpeg");
+    }
+</style>
+
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+
+    <h3>Welcome @ViewBag.Message</h3>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+
+
+<div class="dashboard col-sm-6">
+    <partial name="~/Views/Shared/_GeneralStylePartial.cshtml" />
+
+    <div class="card text-dark ">
+        <div class="card-header">
+            <h1>Accounts </h1>
+            @* <h2>@ViewBag.MySession</h2> *@
+            @* <h3>Welcome - @Model.FirstName</h3> *@
+        </div>
+        <div class="card-body">
+
+
+            @* <h5 class="card-title">@account.AccountType - @account.AccountNumber </h5> *@
+            <a asp-action="Account" asp-controller="bank" asp-route-Id="@myAccount.Id"
+                class="card-title">@myAccount.AccountType - @myAccount.AccountNumber </a>
+
+            <h6>Available Balance: $ @myAccount.Amount</h6>
+        </div>
+    </div>
+</div>
