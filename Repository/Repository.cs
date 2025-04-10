@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 
 namespace BankApp.Repository
@@ -39,6 +39,10 @@ namespace BankApp.Repository
             return await _dbSet.ToListAsync(cancellationToken: cancellationToken);
         }
 
+        public async Task<T?> GetByEmailAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _dbSet.FirstOrDefaultAsync(predicate);
+        }
 
         public async Task<T?> GetByIdAsync(int Id)
         {

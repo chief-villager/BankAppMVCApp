@@ -1,24 +1,12 @@
-using System.Collections;
-using System.Data.Common;
-using System;
-using System.Collections.Generic;
-using System.Data.Entity;
-using System.Diagnostics;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading.Tasks;
 using BankApp.EnumEntities;
 using BankApp.Models;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using X.PagedList;
-using BankApp;
 using BankApp.Services;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using X.PagedList;
 
 namespace BankApp.Controllers
 {
@@ -29,20 +17,20 @@ namespace BankApp.Controllers
         private readonly ApplicationDbContext _db;
         private readonly IAccountService _accountService;
         private readonly ICustomerService _customerService;
-        private readonly IHttpContextAccessor _httpContext;
+        private readonly ICookieService _cookieService;
 
         public bankController(
             ILogger<bankController> logger,
             ApplicationDbContext db,
             IAccountService accountService,
             ICustomerService customerService,
-            IHttpContextAccessor httpContext)
+            ICookieService cookieService)
         {
             _logger = logger;
             _db = db;
             _accountService = accountService;
             _customerService = customerService;
-            _httpContext = httpContext;
+            _cookieService = cookieService;
         }
 
         [AllowAnonymous]
@@ -87,8 +75,8 @@ namespace BankApp.Controllers
         [Route("security")]
         public async Task<IActionResult> Security(CancellationToken cancellationToken)
         {
-            var customerId = _httpContext.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? throw new NullReferenceException("customerId not found");
-            var currentCustomer = await _customerService.GetSecurityQuestionAsync(int.Parse(customerId), cancellationToken);
+            var customerId = await _cookieService.GetUserId( cancellationToken);
+            var currentCustomer = await _customerService.GetSecurityQuestionAsync(customerId, cancellationToken);
             return currentCustomer == null ? NotFound() : View(currentCustomer);
         }
 
@@ -97,13 +85,17 @@ namespace BankApp.Controllers
         public async Task<IActionResult> Security(string question, string answer, CancellationToken cancellationToken)
         {
 
-            var customerId = _httpContext.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? throw new NullReferenceException("customerId not found");
-            var confirmation = await _customerService.ConfirmSecurityAnswerAsync(answer, int.Parse(customerId), cancellationToken);
+            var customerId = await _cookieService.GetUserId( cancellationToken);
+            var confirmation = await _customerService.ConfirmSecurityAnswerAsync(answer, customerId, cancellationToken);
             if (confirmation)
             {
                 return RedirectToAction("Dashboard");
             }
-            ViewBag.Message = "Wrong Security Answer";
+            else
+            {
+                ViewBag.Message = "Wrong Security Answer";
+            }
+
             return View();
         }
 
@@ -134,9 +126,9 @@ namespace BankApp.Controllers
         [Route("Dashboard")]
         public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
         {
-            var customerId = _httpContext.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? throw new NullReferenceException("customerId not found");
+            var customerId = await _cookieService.GetUserId( cancellationToken);
 
-            var accounts = await _accountService.GetAllAccountsAsync(int.Parse(customerId), cancellationToken);
+            var accounts = await _accountService.GetAllAccountsAsync(customerId, cancellationToken);
             return View(accounts);
 
         }
@@ -164,9 +156,9 @@ namespace BankApp.Controllers
         [HttpGet("Account/{Id:int}")]
         public async Task<IActionResult> Account([FromRoute] int Id, int? page, CancellationToken cancellationToken)
         {
-            var customerId = _httpContext.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? throw new NullReferenceException("customerId not found");
-            var newCustomerId = int.Parse(customerId);
-            Account? accounts = Id <= 0 ? throw new ArgumentOutOfRangeException(nameof(Id)) : await _accountService.GetAllAccountTranactionAsync(newCustomerId, Id, cancellationToken);
+            var customerId = await _cookieService.GetUserId(cancellationToken);
+            Account? accounts = Id <= 0 ? throw new ArgumentOutOfRangeException(nameof(Id)) 
+                : await _accountService.GetAllAccountTranactionAsync(customerId, Id, cancellationToken);
             ViewBag.balance = accounts!.Amount;
             var pageNumber = page ?? 1;
             var onePageOfProducts = accounts.Transaction.ToPagedList(pageNumber, 5);
@@ -186,10 +178,10 @@ namespace BankApp.Controllers
         {
             if (ModelState.IsValid)
             {
-                var customerId = _httpContext.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? throw new NullReferenceException("customerId not found");
+                var customerId = await _cookieService.GetUserId(cancellationToken);
                 _ = transaction.TransactionType == nameof(TransactionType.Credit)
-                            ? await _accountService.CreditAccountAsync(int.Parse(customerId), transaction.AccountNumber!, transaction.Amount, transaction.TransactionDetail!)
-                            : await _accountService.DebitAccountAsync(int.Parse(customerId), transaction.AccountNumber!, transaction.Amount, transaction.TransactionDetail!);
+                            ? await _accountService.CreditAccountAsync(customerId, transaction.AccountNumber!, transaction.Amount, transaction.TransactionDetail!)
+                            : await _accountService.DebitAccountAsync(customerId, transaction.AccountNumber!, transaction.Amount, transaction.TransactionDetail!);
                 return Ok();
             }
 
@@ -203,8 +195,9 @@ namespace BankApp.Controllers
         public async Task<IActionResult> Profile(CancellationToken cancellationToken)
         {
 
-            var customerId = _httpContext.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? throw new NullReferenceException("customerId not found");
-            var customer = await _customerService.GetCustomerAsync(int.Parse(customerId!), cancellationToken) ?? throw new NullReferenceException("customerID NOT FOUND");
+            var customerId = await _cookieService.GetUserId(cancellationToken);
+            var customer = await _customerService.GetCustomerAsync(customerId, cancellationToken) 
+                ?? throw new NullReferenceException("customerID NOT FOUND");
             return View(customer);
 
         }
@@ -213,8 +206,9 @@ namespace BankApp.Controllers
         [Route("Transfer")]
         public async Task<IActionResult> TransferAsync(CancellationToken cancellationToken)
         {
-            var customerId = _httpContext.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value ?? throw new NullReferenceException("customerId not found");
-            var customer = await _customerService.GetCustomerWithAccount(int.Parse(customerId!), cancellationToken) ?? throw new NullReferenceException("customer NOT FOUND");
+            var customerId = await _cookieService.GetUserId(cancellationToken);
+            var customer = await _customerService.GetCustomerWithAccount(customerId, cancellationToken) 
+                ?? throw new NullReferenceException("customer NOT FOUND");
             return View(customer);
         }
     }

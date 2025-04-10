@@ -13,7 +13,12 @@ using Microsoft.AspNetCore.Authentication;
 
 namespace BankApp.Services
 {
-    public class CustomerService(IRepository<Customer> customerRepository, IPasswordhasher passwordhasher, IAccountService accountService, ApplicationDbContext dbContext, IHttpContextAccessor httpContext) : ICustomerService
+    public class CustomerService(
+        IRepository<Customer> customerRepository, 
+        IPasswordhasher passwordhasher, 
+        IAccountService accountService, 
+        ApplicationDbContext dbContext, 
+        IHttpContextAccessor httpContext) : ICustomerService
     {
 
         private readonly IRepository<Customer> _customerRepository = customerRepository;
@@ -55,14 +60,13 @@ namespace BankApp.Services
 
                 _passwordhasher.VerifyPassword(customer.PassWord!, password);
 
-                if (customer.Id < 0)
+                if (customer.Id <= 0)
                 {
                     throw new NullReferenceException("customer not found");
                 }
 
                 var claims = new List<Claim>
                 {
-                    new(ClaimTypes.Name, customer.Id.ToString()),
                     new(ClaimTypes.Email,email),
                     new(ClaimTypes.Role, "Customer"),
                 };

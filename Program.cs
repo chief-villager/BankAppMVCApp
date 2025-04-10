@@ -19,6 +19,8 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IPasswordhasher, PasswordHasher>();
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
+builder.Services.AddScoped<ICookieService,CookieService>();
+
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 
 
@@ -34,15 +36,14 @@ else
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    
 })
     .AddCookie(options =>
     {
         options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
         options.SlidingExpiration = true;
         options.AccessDeniedPath = "/bank/Login";
-        options.LoginPath = "/bank/Login";
-        options.Cookie.HttpOnly = true;
+       
 
     });
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -66,6 +67,13 @@ app.UseRouting();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+var cookiePolicyOptions = new CookiePolicyOptions
+{
+    MinimumSameSitePolicy = SameSiteMode.Lax
+
+};
+app.UseCookiePolicy(cookiePolicyOptions);
 
 app.MapControllerRoute(
     name: "Default",
